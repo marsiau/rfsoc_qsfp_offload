@@ -24,7 +24,7 @@ index 4aac84e..4c1f29f 100755
 -else ifeq (vck5000,$(findstring vck5000, $(DEVICE)))
 -	SUBMODULETARGET = versalaicore
 -endif
-+SUBMODULETARGET = all
++SUBMODULETARGET = nohbm
  
  .PHONY: all clean cleanall
  all: check-devices check-vivado $(NETLAYER_OBJS)
