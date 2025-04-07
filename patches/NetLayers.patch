@@ -1,11 +1,5 @@
-diff --git a/NetLayers/100G-fpga-network-stack-core b/NetLayers/100G-fpga-network-stack-core
---- a/NetLayers/100G-fpga-network-stack-core
-+++ b/NetLayers/100G-fpga-network-stack-core
-@@ -1 +1 @@
--Subproject commit 872d53d706c04dad50fc50faeb1bb96256060ffe
-+Subproject commit 872d53d706c04dad50fc50faeb1bb96256060ffe-dirty
 diff --git a/NetLayers/Makefile b/NetLayers/Makefile
-index 4aac84e..8a81185 100755
+index 4aac84e..4c1f29f 100755
 --- a/NetLayers/Makefile
 +++ b/NetLayers/Makefile
 @@ -16,7 +16,7 @@ help:
@@ -17,15 +11,23 @@ index 4aac84e..8a81185 100755
  KRNL_NAME := networklayer
  SUBMODULENAME = 100G-fpga-network-stack-core
  
-@@ -34,6 +34,8 @@ else ifeq (u2,$(findstring u2, $(DEVICE)))
- 	SUBMODULETARGET = nohbm
- else ifeq (vck5000,$(findstring vck5000, $(DEVICE)))
- 	SUBMODULETARGET = versalaicore
-+else ifeq (rfsoc4x2,$(findstring rfsoc4x2, $(DEVICE)))
-+	SUBMODULETARGET = all
- endif
+@@ -26,15 +26,7 @@ VIVADO := $(XILINX_VIVADO)/bin/vivado
+ 
+ NETLAYER_OBJS = $(TEMP_DIR)/${KRNL_NAME}.xo
+ 
+-ifeq (u5,$(findstring u5, $(DEVICE)))
+-	SUBMODULETARGET = hbm
+-else ifeq (u280,$(findstring u280, $(DEVICE)))
+-	SUBMODULETARGET = hbm
+-else ifeq (u2,$(findstring u2, $(DEVICE)))
+-	SUBMODULETARGET = nohbm
+-else ifeq (vck5000,$(findstring vck5000, $(DEVICE)))
+-	SUBMODULETARGET = versalaicore
+-endif
++SUBMODULETARGET = all
  
  .PHONY: all clean cleanall
+ all: check-devices check-vivado $(NETLAYER_OBJS)
 diff --git a/NetLayers/bd_network_layer.tcl b/NetLayers/bd_network_layer.tcl
 index d1eaa0b..0e1a438 100644
 --- a/NetLayers/bd_network_layer.tcl
