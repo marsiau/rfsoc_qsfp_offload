@@ -36,8 +36,6 @@ from pynq.utils import ReprDict
 import numpy as np
 import ipaddress
 from enum import Enum
-import json
-import os
 
 
 def _slice_word(value, index, width=1):
@@ -80,186 +78,6 @@ _cmac_modes = {
         3: 'Runtime Switchable CAUI4'
     }
 
-
-class CMAC(DefaultIP):
-    """This class wrapps the common function of the CMAC IP
-    """
-
-    bindto = ["xilinx.com:kernel:cmac_0:1.0",
-              "xilinx.com:kernel:cmac_1:1.0",
-#               "xilinx.com:ip:cmac_usplus:3.1",
-             ]
-
-    def __init__(self, description):
-        super().__init__(description=description)
-        self._fullpath = description['fullpath']
-        self.start = self.start_sw = self.start_none = \
-            self.start_ert = self.call
-
-    def _setup_packet_prototype(self):
-        pass
-
-    def call(self, *args, **kwargs):
-        raise RuntimeError("{} is a free running kernel and cannot be "
-                           "starter or called".format(self._fullpath))
-
-    def link_status(self, debug: bool=False) -> dict:
-        """Current CMAC link status
-
-        Parameters
-        ----------
-        debug: bool
-        if enable provides more information
-
-        Returns
-        -------
-        A dictionary with link status, more status information
-        is returned if debug == True
-        """
-
-        if not isinstance(debug, bool):
-            raise ValueError("debug must be a bool type")
-
-        # The first time these registers are not populated properly,
-        # read them twice to get real value
-        for _ in range(2):
-            rx_status = int(self.register_map.stat_rx_status)
-            tx_status = int(self.register_map.stat_tx_status)
-
-        status_dict = {}
-        status_dict["cmac_link"] = bool(_slice_word(rx_status, 0))
-        if debug:
-            status_dict["rx_status"] = bool(_slice_word(rx_status, 0))
-            status_dict["rx_aligned"] = bool(_slice_word(rx_status, 1))
-            status_dict["rx_misaligned"] = bool(_slice_word(rx_status, 2))
-            status_dict["rx_aligned_err"] = bool(_slice_word(rx_status, 3))
-            status_dict["rx_hi_ber"] = bool(_slice_word(rx_status, 4))
-            status_dict["rx_remote_fault"] = bool(_slice_word(rx_status, 5))
-            status_dict["rx_local_fault"] = bool(_slice_word(rx_status, 6))
-            status_dict["rx_got_signal_os"] = bool(_slice_word(rx_status, 14))
-            status_dict["tx_local_fault"] = bool(_slice_word(tx_status, 0))
-
-        return status_dict
-
-    def copy_stats(self) -> None:
-        """Triggers a snapshot of CMAC Statistics
-
-        Triggers a snapshot of all thecmac_0 Statistics counters into their
-        readable register. The bit self-clears.
-        """
-
-        self.register_map.stat_pm_tick = 1
-
-    def get_stats(self, update_reg: bool=True) -> dict:
-        """ Return a dictionary with the CMAC stats
-
-        Parameters
-        ----------
-        debug: bool
-        if enabled, the CMAC registers are copied from internal counters
-
-        Returns
-        -------
-        A dictionary with the CMAC statistics
-        """
-        if update_reg:
-            self.copy_stats()
-
-        rmap = self.register_map
-        stats_dict = dict()
-        stats_dict['tx'] = dict()
-        stats_dict['rx'] = dict()
-        stats_dict['cycle_count'] = int(rmap.stat_cycle_count)
-        # Tx
-        stats_dict['tx'] = {
-            "packets": int(rmap.stat_tx_total_packets),
-            "good_packets": int(rmap.stat_tx_total_good_packets),
-            "bytes": int(rmap.stat_tx_total_bytes),
-            "good_bytes": int(rmap.stat_tx_total_good_bytes),
-            "packets_64B": int(rmap.stat_tx_total_packets_64B),
-            "packets_65_127B": int(rmap.stat_tx_total_packets_65_127B),
-            "packets_128_255B": int(rmap.stat_tx_total_packets_128_255B),
-            "packets_256_511B": int(rmap.stat_tx_total_packets_256_511B),
-            "packets_512_1023B": int(rmap.stat_tx_total_packets_512_1023B),
-            "packets_1024_1518B": int(rmap.stat_tx_total_packets_1024_1518B),
-            "packets_1519_1522B": int(rmap.stat_tx_total_packets_1519_1522B),
-            "packets_1523_1548B": int(rmap.stat_tx_total_packets_1523_1548B),
-            "packets_1549_2047B": int(rmap.stat_tx_total_packets_1549_2047B),
-            "packets_2048_4095B": int(rmap.stat_tx_total_packets_2048_4095B),
-            "packets_4096_8191B": int(rmap.stat_tx_total_packets_4096_8191B),
-            "packets_8192_9215B": int(rmap.stat_tx_total_packets_8192_9215B),
-            "packets_large": int(rmap.stat_tx_total_packets_large),
-            "packets_small": int(rmap.stat_tx_total_packets_small),
-            "bad_fcs": int(rmap.stat_tx_total_bad_fcs),
-            "pause": int(rmap.stat_tx_pause),
-            "user_pause": int(rmap.stat_tx_user_pause),
-        }
-
-        stats_dict['rx'] = {
-            "packets": int(rmap.stat_rx_total_packets),
-            "good_packets": int(rmap.stat_rx_total_good_packets),
-            "bytes": int(rmap.stat_rx_total_bytes),
-            "good_bytes": int(rmap.stat_rx_total_good_bytes),
-            "packets_64B": int(rmap.stat_rx_total_packets_64B),
-            "packets_65_127B": int(rmap.stat_rx_total_packets_65_127B),
-            "packets_128_255B": int(rmap.stat_rx_total_packets_128_255B),
-            "packets_256_511B": int(rmap.stat_rx_total_packets_256_511B),
-            "packets_512_1023B": int(rmap.stat_rx_total_packets_512_1023B),
-            "packets_1024_1518B": int(rmap.stat_rx_total_packets_1024_1518B),
-            "packets_1519_1522B": int(rmap.stat_rx_total_packets_1519_1522B),
-            "packets_1523_1548B": int(rmap.stat_rx_total_packets_1523_1548B),
-            "packets_1549_2047B": int(rmap.stat_rx_total_packets_1549_2047B),
-            "packets_2048_4095B": int(rmap.stat_rx_total_packets_2048_4095B),
-            "packets_4096_8191B": int(rmap.stat_rx_total_packets_4096_8191B),
-            "packets_8192_9215B": int(rmap.stat_rx_total_packets_8192_9215B),
-            "packets_large": int(rmap.stat_rx_total_packets_large),
-            "packets_small": int(rmap.stat_rx_total_packets_small),
-            "packets_undersize": int(rmap.stat_rx_total_packets_undersize),
-            "packets_fragmented": int(rmap.stat_rx_total_packets_fragmented),
-            "packets_oversize": int(rmap.stat_rx_total_packets_oversize),
-            "packets_toolong": int(rmap.stat_rx_total_packets_toolong),
-            "packets_jabber": int(rmap.stat_rx_total_packets_jabber),
-            "bad_fcs": int(rmap.stat_rx_total_bad_fcs),
-            "packets_bad_fcs": int(rmap.stat_rx_packets_bad_fcs),
-            "stomped_fcs": int(rmap.stat_rx_stomped_fcs),
-            "pause": int(rmap.stat_rx_pause),
-            "user_pause": int(rmap.stat_rx_user_pause),
-        }
-
-        return stats_dict
-
-    @property
-    def version(self):
-        """Returns the CMAC Core version
-        """
-
-        version = int(self.register_map.version)
-        return str(_slice_word(version, 8, 8)) + '.' \
-            + str(_slice_word(version, 0, 8))
-
-    @property
-    def mode(self):
-        """Returns the CMAC Core mode
-        """
-        mode = int(self.register_map.core_mode) & 0x3
-        return _cmac_modes[mode]
-
-    @property
-    def loopback(self):
-        """ GT Loopback
-
-        False: normal operation
-        True: GT internal loopback
-        """
-        return bool(int(self.register_map.gt_loopback) & 0x1)
-
-    @loopback.setter
-    def loopback(self, operation):
-        if not isinstance(operation, (int, bool)):
-            raise ValueError("operation must be int or bool")
-        self.register_map.gt_loopback = int(bool(operation))
-
-
 def _byte_ordering_endianess(num, length=4):
     """
     Convert from little endian to big endian and vice versa
@@ -297,21 +115,18 @@ class NetworkLayer(DefaultIP):
 
     """
 
-    bindto = ['xilinx.com:RTLKernel:networklayer:1.0']
+    bindto = ["xilinx.com:kernel:networklayer:1.0"]
 
     _socketType = np.dtype(
         [
             ("theirIP", np.unicode_, 16),
             ("theirPort", np.uint16),
             ("myPort", np.uint16),
-            ("valid", np.bool),
+            ("valid", bool),
         ]
     )
 
     def __init__(self, description):
-        with open(os.path.join(os.path.dirname(__file__), 'network_layer.json')) as f:
-            nl_reg = json.load(f)
-        description['registers'] = nl_reg
         super().__init__(description=description)
         self._fullpath = description['fullpath']
         self.start = self.start_sw = self.start_none = \
@@ -373,9 +188,9 @@ class NetworkLayer(DefaultIP):
             self.write(v_offset, int(self.sockets[i]["valid"]))
 
         if debug:
-            self.read_socket_table()
+            return self.get_socket_table()
 
-    def read_socket_table(self) -> dict:
+    def get_socket_table(self) -> dict:
         """ Reads the socket table
 
         Returns
@@ -398,7 +213,7 @@ class NetworkLayer(DefaultIP):
             tp_offset = theirPort_offset + i * 8
             mp_offset = udp_myPort_offset + i * 8
             v_offset = udp_valid_offset + i * 8
-            isvalid = ti = self.read(v_offset)
+            isvalid = self.read(v_offset)
             if isvalid:
                 ti = self.read(ti_offset)
                 tp = self.read(tp_offset)
@@ -409,9 +224,17 @@ class NetworkLayer(DefaultIP):
                 socket_dict['socket'][i]['theirPort'] = tp
                 socket_dict['socket'][i]['myPort'] = mp
 
-            return ReprDict(socket_dict, rootname='socket_table')
+        return ReprDict(socket_dict, rootname='socket_table')
 
-    def read_arp_table(self, num_entries=256) -> dict:
+    def invalidate_socket_table(self):
+        """ Clear the Socket table """
+
+        udp_valid_offset = self.register_map.udp_valid_offset.address
+        numSocketsHW = int(self.register_map.udp_number_sockets)
+        for i in range(numSocketsHW):
+            self.write(int(udp_valid_offset + i * 8), 0)
+
+    def get_arp_table(self, num_entries=256) -> dict:
         """Read the ARP table from the FPGA return a dict
 
         Parameters
@@ -678,25 +501,22 @@ class NetworkLayer(DefaultIP):
                 "bytes": int(rmap.eth_out_bytes),
                 "cycles": int(rmap.eth_out_cycles)
             },
-            "app": {
-                "packets": int(rmap.app_out_packets),
-                "bytes": int(rmap.app_out_bytes),
-                "cycles": int(rmap.app_out_cycles)
-            },
             "udp": {
                 "packets": int(rmap.udp_out_packets),
                 "bytes": int(rmap.udp_out_bytes),
                 "cycles": int(rmap.udp_out_cycles)
+            },
+            "app": {
+                "packets": int(rmap.app_out_packets),
+                "bytes": int(rmap.app_out_bytes),
+                "cycles": int(rmap.app_out_cycles)
             }
         }
 
         return ReprDict(probes, rootname='debug_probes')
 
 
-benchmark_mode = ["PRODUCER", "LATENCY", "LOOPBACK", "CONSUMER"]
-
-
-class tgmode(Enum):
+class TgMode(Enum):
     """Supported Traffic generator Modes"""
     PRODUCER = 0
     LATENCY = 1
@@ -712,15 +532,19 @@ class TrafficGenerator(DefaultIP):
 
     def __init__(self, description):
         super().__init__(description=description)
+        self.start = self._call = self._start_sw = self.start_sw = self.call = self._start_ert
         self.freq = None
 
-    def start(self, mode: tgmode, dest: int=0, packets: int=None,
+    def _setup_packet_prototype(self):
+        pass
+
+    def _start_ert(self, mode: TgMode, dest: int=0, packets: int=None,
               beats: int=None, tbwp: int=None):
         """Starts the Traffic generator
 
         Parameters
         ----------
-        mode: tgmode
+        mode: TgMode
             Operation mode
         dest: int
             Index in the socket table
@@ -734,15 +558,14 @@ class TrafficGenerator(DefaultIP):
         tbwp:
             Clock ticks between two consecutive payload packets
         """
-
-        if mode == tgmode.PRODUCER or mode == tgmode.LATENCY:
-            if not packets:
+        if mode == TgMode.PRODUCER or mode == TgMode.LATENCY:
+            if packets is None:
                 raise RuntimeError("packets must be specified when mode is {}"
                                    .format(mode))
-            elif not beats:
+            elif beats is None:
                 raise RuntimeError("beats must be specified when mode is {}"
                                    .format(mode))
-            elif not tbwp:
+            elif tbwp is None:
                 raise RuntimeError("tbwp must be specified when mode is {}"
                                    .format(mode))
 
@@ -812,8 +635,9 @@ class DataMover(DefaultIP):
 
     def __init__(self, description):
         super().__init__(description=description)
+        self.start = self._start
 
-    def start(self, *args, **kwargs):
+    def _start(self, *args, **kwargs):
         """Start the accelerator
         This function will configure the accelerator with the provided
         arguments and start the accelerator. Use the `wait` function to
@@ -833,7 +657,10 @@ class DataMover(DefaultIP):
             elif i[0] == 'dest' and args[idx] > 15:
                 raise ValueError("dest cannot be bigger than 15")
 
-        return self._start(*args, **kwargs)
+        if self.device.has_capability("ERT"):
+            return self._start_ert(*args, **kwargs)
+        else:
+            return self._start_sw(*args, **kwargs)
 
 
 class CounterIP(DefaultIP):
