@@ -10,10 +10,7 @@ set origin_dir [get_property DIRECTORY [current_project]]
 set topname [current_bd_design]
 set topwrapper [get_property top [current_fileset]]
 
-set overlay_dir $origin_dir/../overlay
+set overlay_dir ${origin_dir}/../overlay
 file mkdir -p $overlay_dir
 
-# .bit
-file copy -force $origin_dir/$overlay_name.runs/impl_1/$topwrapper.bit $overlay_dir/$overlay_name.bit
-# .hwh
-file copy -force $origin_dir/$overlay_name.srcs/sources_1/bd/$topname/hw_handoff/$topname.hwh $overlay_dir$overlay_name.hwh
+write_hw_platform -fixed -include_bit -force -file ${overlay_dir}/${overlay_name}.xsa
