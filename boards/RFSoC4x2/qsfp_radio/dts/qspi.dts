@@ -1,0 +1,31 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    fragment@0 {
+        target-path = "/axi";
+
+        __overlay__ {
+            external_spi: spi@b0020000 {
+                compatible = "xlnx,xps-spi-2.00.a";
+                reg = <0x00b0020000 0x00010000>; // 64 KB region
+                #address-cells = <1>;
+                #size-cells = <0>;
+
+                clock-names = "ref_clk", "pclk";
+                clocks = <&pss_ref_clk>, <&pss_ref_clk>; // Dummy link to fixed clock
+
+                fifo-size = <16>;
+                num-cs = <1>;
+                xlnx,num-ss-bits = <1>;
+                xlnx,spi-mode = <0>; // Standard SPI mode
+
+                adf4377@0 {
+                    compatible = "adi,adf4377";
+                    reg = <0>; // Chip select 0
+                    spi-max-frequency = <50000000>; // 50 MHz max safe freq
+                };
+            };
+        };
+    };
+};
