@@ -83,7 +83,12 @@ class Overlay (Overlay):
     def set_fc(self, tile, block, fc):
         """ Change the center frequency.
         """
-        self.rfdc.adc_tiles[tile].blocks[block].MixerSettings['Freq'] = -fc
+        if fc <= 4915200:
+            self.rfdc.adc_tiles[tile].blocks[block].MixerSettings['Freq'] = -fc
+            self.rfdc.adc_tiles[tile].blocks[block].NyquistZone = 1
+        else
+            self.rfdc.adc_tiles[tile].blocks[block].MixerSettings['Freq'] = fc
+            self.rfdc.adc_tiles[tile].blocks[block].NyquistZone = 2
         self.rfdc.adc_tiles[tile].blocks[block].UpdateEvent(xrfdc.EVENT_MIXER)
         return fc
 
