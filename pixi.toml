@@ -1,0 +1,74 @@
+[workspace]
+name = "rfsoc_qsfp"
+version = "0.1.0"
+description = "GNU Radio, fosphor and PYNQ.remote environment"
+channels = [
+    "conda-forge",
+    "ryanvolz",
+]
+platforms = ["linux-64"]
+
+[dependencies]
+# Match the coherent Radioconda 2024.05.29 release.
+python = "==3.11.9"
+numpy = "==1.26.4"
+
+# This metapackage pins the exact GNU Radio, fosphor, fmt, spdlog,
+# Qt and other binary builds used by the Radioconda release.
+radioconda = {
+    version = "==2024.05.29",
+    channel = "ryanvolz",
+}
+
+# General development/runtime tools.
+git = "*"
+
+# PYNQ compatibility constraints.
+setuptools = "<=80"
+pycparser = "<3"
+
+# Additional notebook tooling for this project.
+jupyterlab = "*"
+voila = "*"
+ipywidgets = "*"
+plotly = "*"
+anywidget = "*"
+ocl-icd-system = ">=1.0.0,<2"
+clinfo = ">=3.0.21.2.21,<4"
+
+[pypi-dependencies]
+pynqutils = {
+    git = "https://github.com/Xilinx/PYNQ-Utils.git",
+    branch = "main",
+}
+rfsoc_qsfp_offload = {
+    path = ".",
+    editable = true,
+}
+
+pynq = {
+    git = "https://github.com/Xilinx/PYNQ.git",
+    branch = "pynq-next",
+}
+
+[activation.env]
+PYNQ_REMOTE = "1"
+PYNQ_REMOTE_DEVICES = "10.42.0.230"
+BOARD="RFSoC4x2"
+PYNQ_JUPYTER_NOTEBOOKS="./notebooks"
+
+
+[tasks]
+grc = "gnuradio-companion"
+jupyter = "jupyter-lab"
+
+versions = """
+python --version &&
+python -c "import numpy; print('NumPy:', numpy.__version__)" &&
+python -c "import pynq; print('PYNQ:', pynq.__version__)" &&
+python -c "from gnuradio import gr; print('GNU Radio:', gr.version())"
+"""
+
+check-fosphor = """
+python -c "from gnuradio import fosphor; print('GNU Radio fosphor import OK')"
+"""
