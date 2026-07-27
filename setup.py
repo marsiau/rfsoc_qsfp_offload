@@ -61,7 +61,7 @@ check_env()
 check_path()
 copy_bitstream()
 copy_assets()
-copy_drivers()
+#copy_drivers()
 copy_notebooks()
 
 setup(
