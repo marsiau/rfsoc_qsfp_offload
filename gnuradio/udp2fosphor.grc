@@ -77,7 +77,7 @@ blocks:
     bus_structure: null
     coordinate: [480, 8.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: packet_size
   id: variable
   parameters:
@@ -204,7 +204,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [480, 344.0]
+    coordinate: [472, 320.0]
     rotation: 0
     state: enabled
 - name: network_udp_source_0
@@ -230,25 +230,6 @@ blocks:
     coordinate: [0, 320.0]
     rotation: 0
     state: true
-- name: qtgui_graphicitem_0
-  id: qtgui_graphicitem
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    file: ../assets/rfsoc-pynq.png
-    fixedsize: 'True'
-    gui_hint: qtgui_tab@0:(0,0)
-    height: '1'
-    scaleImage: 'True'
-    width: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [0, 96.0]
-    rotation: 0
-    state: enabled
 - name: qtgui_tab
   id: qtgui_tab_widget
   parameters:
@@ -359,7 +340,7 @@ blocks:
     bus_structure: null
     coordinate: [480, 80.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: xmlrpc_client_0_0
   id: xmlrpc_client
   parameters:
@@ -375,7 +356,7 @@ blocks:
     bus_structure: null
     coordinate: [480, 184.0]
     rotation: 0
-    state: disabled
+    state: enabled
 
 connections:
 - [blocks_interleaved_short_to_complex_0, '0', blocks_probe_rate_0, '0']
