@@ -55,8 +55,8 @@ pynq = {
 [activation.env]
 PYNQ_REMOTE = "1"
 PYNQ_REMOTE_DEVICES = "10.42.0.230"
-BOARD="RFSoC4x2"
-PYNQ_JUPYTER_NOTEBOOKS="./notebooks"
+BOARD = "RFSoC4x2"
+PYNQ_JUPYTER_NOTEBOOKS = "$PIXI_PROJECT_ROOT/notebooks"
 #OPENCL_VENDOR_PATH = "/etc/OpenCL/vendors"
 
 

@@ -70,7 +70,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '"Insert your own IP"'
+    value: '"10.42.0.231"'
   states:
     bus_sink: false
     bus_source: false

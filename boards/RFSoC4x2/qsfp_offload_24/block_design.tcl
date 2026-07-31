@@ -415,6 +415,7 @@ tdata[159:144], tdata[31:16], tdata[143:128], tdata[15:0]} \
   set dma_fifo_tx [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_data_fifo:2.0 dma_fifo_tx ]
   set_property -dict [list \
     CONFIG.FIFO_MODE {2} \
+    CONFIG.HAS_TKEEP {0} \
     CONFIG.IS_ACLK_ASYNC {1} \
     CONFIG.TDATA_NUM_BYTES {64} \
   ] $dma_fifo_tx
@@ -428,7 +429,10 @@ tdata[159:144], tdata[31:16], tdata[143:128], tdata[15:0]} \
 
   # Create instance: netlayer_switch, and set properties
   set netlayer_switch [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_switch:1.1 netlayer_switch ]
-  set_property CONFIG.ROUTING_MODE {1} $netlayer_switch
+  set_property -dict [list \
+    CONFIG.HAS_TKEEP {0} \
+    CONFIG.ROUTING_MODE {1} \
+  ] $netlayer_switch
 
 
   # Create instance: packet_generator, and set properties
