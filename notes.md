@@ -1,3 +1,14 @@
+## dev
+PYNQ_REMOTE_DEVICES = "10.42.0.230"
+BOARD = "RFSoC4x2"
+clk files
+.xsa
+
+oot blocks
+    qsfp.ol
+    
+
+
 ## Pixi
 *  Nuke
 ```
@@ -25,6 +36,7 @@ pixi install
 
 ## PYNQ.remote
 * <>.bin gets stored in `/lib/firmware`
+xclk files in ?
 
 ## 
 
