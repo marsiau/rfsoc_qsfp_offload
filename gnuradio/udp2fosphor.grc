@@ -33,7 +33,19 @@ options:
     state: enabled
 
 blocks:
-- name: center_F
+- name: Fc_Hz
+  id: variable
+  parameters:
+    comment: ''
+    value: Fc_MHz*1e6
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [312, 144.0]
+    rotation: 0
+    state: enabled
+- name: Fc_MHz
   id: variable_qtgui_range
   parameters:
     comment: ''
@@ -54,48 +66,12 @@ blocks:
     coordinate: [312, 8.0]
     rotation: 0
     state: true
-- name: center_f
-  id: variable
-  parameters:
-    comment: ''
-    value: center_F*1e6
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [312, 144.0]
-    rotation: 0
-    state: enabled
-- name: ip_address
-  id: variable
-  parameters:
-    comment: ''
-    value: '"10.42.0.231"'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [480, 8.0]
-    rotation: 0
-    state: enabled
-- name: packet_size
-  id: variable
-  parameters:
-    comment: ''
-    value: 8192//2
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [312, 216.0]
-    rotation: 0
-    state: true
-- name: samp_rate
+- name: Fs
   id: variable_qtgui_chooser
   parameters:
     comment: ''
     gui_hint: qtgui_tab@0:(0,1)
-    label: Sample rate
+    label: Fs
     label0: d = 2, fs = 2457.6e6
     label1: d = 4, fs =  1228.8e6
     label2: d = 8, fs = 614.4e6
@@ -120,6 +96,62 @@ blocks:
     coordinate: [152, 4.0]
     rotation: 0
     state: true
+- name: ip_address
+  id: variable
+  parameters:
+    comment: ''
+    value: '"10.42.0.231"'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [480, 8.0]
+    rotation: 0
+    state: enabled
+- name: packet_size
+  id: variable
+  parameters:
+    comment: ''
+    value: 8192//2
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [312, 216.0]
+    rotation: 0
+    state: true
+- name: variable_function_probe_0
+  id: variable_function_probe
+  parameters:
+    block_id: qsfp_offload
+    comment: ''
+    function_args: Fc_Hz
+    function_name: set_fc
+    poll_rate: '10'
+    value: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [200, 496.0]
+    rotation: 0
+    state: enabled
+- name: variable_function_probe_0_0
+  id: variable_function_probe
+  parameters:
+    block_id: qsfp_offload
+    comment: ''
+    function_args: Fs
+    function_name: set_decimation
+    poll_rate: '10'
+    value: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [200, 640.0]
+    rotation: 0
+    state: enabled
 - name: blocks_interleaved_short_to_complex_0
   id: blocks_interleaved_short_to_complex
   parameters:
@@ -150,7 +182,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [760, 360.0]
+    coordinate: [752, 320.0]
     rotation: 0
     state: true
 - name: blocks_message_debug_1
@@ -165,7 +197,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [760, 504.0]
+    coordinate: [752, 456.0]
     rotation: 0
     state: enabled
 - name: blocks_probe_rate_0
@@ -185,7 +217,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [496, 488.0]
+    coordinate: [472, 400.0]
     rotation: 0
     state: enabled
 - name: fosphor_qt_sink_c_0
@@ -194,8 +226,8 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    freq_center: center_f
-    freq_span: samp_rate
+    freq_center: Fc_Hz
+    freq_span: Fs
     gui_hint: qtgui_tab@0:(1,0,1,4)
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -230,6 +262,40 @@ blocks:
     coordinate: [0, 320.0]
     rotation: 0
     state: true
+- name: qsfp_offload
+  id: epy_module
+  parameters:
+    alias: ''
+    comment: ''
+    source_code: "from pynq import PL\nfrom functools import partial\nfrom rfsoc_qsfp_offload.overlay\
+      \ import Overlay\nimport time\n\nPL.reset()\ntime.sleep(1)\nolf = \"/home/msphd/Projects/ms-qsfp-remote/rfsoc_qsfp_offload/bitstream/offloadbd.xsa\"\
+      \nol = Overlay(olf, ignore_version=True)\n\nol.cmac.mmio.write(0x107C, 0x3)\
+      \ # RSFEC_CONFIG_ENABLE\nol.cmac.mmio.write(0x1000, 0x7) # RSFEC_CONFIG_INDICATION_CORRECTION\n\
+      time.sleep(1)\nol.cmac.start()\nboard_ip = '192.168.4.99'\nol.netlayer.set_ip_address(board_ip,\
+      \ debug=True)\nclient_ip = '192.168.4.1'\nol.netlayer.sockets[0] = (client_ip,\
+      \ 60133, 60133, True)\nol.netlayer.populate_socket_table()\n\nol.source_select(1)\
+      \ # 0 - DMA | 1 - RF-ADC\ntime.sleep(1)\nADC_TILE = 2       # ADC Tile 226\n\
+      ADC_BLOCK = 0       # ADC Block 0\nADC_SAMPLE_FREQUENCY = 4915.2  # MSps\nADC_PLL_FREQUENCY\
+      \    = 491.52   # MHz\nADC_FC = -800 # Centering around middle of sample rate\n\
+      \nol.initialise_adc(tile=ADC_TILE,\n                  block=ADC_BLOCK,\n   \
+      \               pll_freq=ADC_PLL_FREQUENCY,\n                  fs=ADC_SAMPLE_FREQUENCY,\n\
+      \                  fc=ADC_FC)\n\nDAC_TILE = 0       # DAC Tile 228\nDAC_BLOCK\
+      \ = 0       # DAC Block 0\nDAC_SAMPLE_FREQUENCY = 4915.2  # MSps\nDAC_PLL_FREQUENCY\
+      \ = 491.52   # MHz\nDAC_FC = 0.0\n\nol.initialise_dac(tile=DAC_TILE,\n     \
+      \             block=DAC_BLOCK,\n                  pll_freq=DAC_PLL_FREQUENCY,\n\
+      \                  fs=DAC_SAMPLE_FREQUENCY,\n                  fc=DAC_FC)\n\n\
+      ol.packet_generator.packetsize = 128 # 128 * 64 bytes = 8192 bytes to be sent\n\
+      ol.packet_generator.enable()\n\n\n\nset_fc = partial(ol.set_fc, ADC_TILE, ADC_BLOCK)\n\
+      set_fc.__name__=\"set_fc\"\nset_decimation = partial(ol.set_decimation, ADC_TILE,\
+      \ ADC_BLOCK)\nset_decimation.__name__=\"set_decimation\"\n\n#server = ServerThread(set_fc,\
+      \ set_decimation)\n#server.start()\n"
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [688, 32.0]
+    rotation: 0
+    state: enabled
 - name: qtgui_tab
   id: qtgui_tab_widget
   parameters:
@@ -280,7 +346,7 @@ blocks:
     alpha8: '1.0'
     alpha9: '1.0'
     axislabels: 'True'
-    bw: samp_rate
+    bw: Fs
     color1: '0'
     color10: '0'
     color2: '0'
@@ -292,7 +358,7 @@ blocks:
     color8: '0'
     color9: '0'
     comment: ''
-    fc: center_f
+    fc: Fc_Hz
     fftsize: '4096'
     freqhalf: 'True'
     grid: 'False'
@@ -322,9 +388,26 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [496, 640.0]
+    coordinate: [472, 496.0]
     rotation: 0
     state: true
+- name: snippet_0
+  id: snippet
+  parameters:
+    alias: ''
+    code: 'qsfp_offload.set_fc(Fc_Hz)
+
+      qsfp_offload.set_decimation(Fs)'
+    comment: ''
+    priority: '0'
+    section: main_after_start
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [672, 96.0]
+    rotation: 0
+    state: disabled
 - name: xmlrpc_client_0
   id: xmlrpc_client
   parameters:
@@ -340,7 +423,7 @@ blocks:
     bus_structure: null
     coordinate: [480, 80.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: xmlrpc_client_0_0
   id: xmlrpc_client
   parameters:
@@ -356,7 +439,7 @@ blocks:
     bus_structure: null
     coordinate: [480, 184.0]
     rotation: 0
-    state: enabled
+    state: disabled
 
 connections:
 - [blocks_interleaved_short_to_complex_0, '0', blocks_probe_rate_0, '0']

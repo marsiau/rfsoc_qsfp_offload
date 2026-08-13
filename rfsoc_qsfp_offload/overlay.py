@@ -19,6 +19,44 @@ fs2div = {
     '307200000.0':  (16,5)
 }
 
+
+def _resolve_bitfile_name(bitfile_name):
+    """Resolve user inputs onto a downloadable bitstream.
+
+    PYNQ can parse `.xsa` files directly, but the XSA exported for this
+    design contains inconsistent AXIS metadata for `netlayer_switch`.
+    Prefer the packaged `.bit`/`.hwh` pair whenever an XSA or HWH path is
+    supplied.
+    """
+    if bitfile_name is None:
+        this_dir = os.path.dirname(__file__)
+        return os.path.join(this_dir, 'bitstream', 'rfsoc_offload.bit')
+
+    bitfile_name = os.path.abspath(os.path.expanduser(bitfile_name))
+    if not os.path.isfile(bitfile_name):
+        raise ValueError("Bitstream does not exist.")
+
+    ext = os.path.splitext(bitfile_name)[1].lower()
+    if ext not in ('.xsa', '.hwh'):
+        return bitfile_name
+
+    same_stem_bit = os.path.splitext(bitfile_name)[0] + '.bit'
+    if os.path.isfile(same_stem_bit):
+        return same_stem_bit
+
+    sibling_bits = sorted(
+        os.path.join(os.path.dirname(bitfile_name), name)
+        for name in os.listdir(os.path.dirname(bitfile_name))
+        if name.endswith('.bit')
+    )
+    if len(sibling_bits) == 1:
+        return sibling_bits[0]
+
+    raise ValueError(
+        "This overlay must be loaded from a .bit file. "
+        "The packaged XSA metadata is not parseable by PYNQ for this design."
+    )
+
 class Overlay (Overlay):
     """Class for the RFSoC offload overlay
     """
@@ -26,21 +64,17 @@ class Overlay (Overlay):
     def __init__(self, bitfile_name=None, **kwargs):
         """Initialise the overlay and drivers.
         """
-
-        # Generate default bitfile name
-        if bitfile_name is None:
-            this_dir = os.path.dirname(__file__)
-            bitfile_name = os.path.join(this_dir, 'bitstream', 'rfsoc_offload.bit')
-        else:
-            if not os.path.isfile(bitfile_name):
-                raise ValueError("Bitstream does not exist.")
+        bitfile_name = _resolve_bitfile_name(bitfile_name)
 
         # Initialise Overlay class
+        print(f"Initing with {bitfile_name}")
         super().__init__(bitfile_name, **kwargs)
+        self.init_rf_clks()
         
     def init_rf_clks(self, lmk_freq=245.76, lmx_freq=491.52):
         """Initialise the LMX and LMK clocks for RF-DC operation.
         """
+        print(f"xrfclk.set_ref_clks(lmk_freq={lmk_freq}, lmx_freq={lmx_freq})")
         xrfclk.set_ref_clks(lmk_freq=lmk_freq, lmx_freq=lmx_freq)
         
     def initialise_adc(self, tile, block, pll_freq=491.52, fs=4915.2, fc=0.0):
